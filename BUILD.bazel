@@ -1,0 +1,17 @@
+load("@rules_rust//rust:defs.bzl", "rust_shared_library", "rust_binary")
+load("@crates//:defs.bzl", "all_crate_deps")
+
+# Plugin shared library with proper dependency management
+rust_shared_library(
+    name = "simple_amplifier",
+    srcs = ["src/lib.rs"],
+    deps = all_crate_deps(normal = True),
+    edition = "2021",
+    visibility = ["//visibility:public"],
+)
+
+# Convenience targets
+filegroup(
+    name = "plugin_sources",
+    srcs = glob(["src/**/*.rs"]),
+)

@@ -1,0 +1,20 @@
+
+# Enable modern features
+common --enable_bzlmod
+
+# Rust-specific settings
+build --@rules_rust//rust/toolchain/channel=stable
+
+# Rust compilation settings
+build --@rules_rust//rust/settings:pipelined_compilation=True
+
+# Error handling for plugin development
+build --verbose_failures
+build --show_result=1
+
+# Rust-specific caching (helps with your remote cache)
+build --@rules_rust//rust/settings:experimental_use_global_allocator=False
+
+# Plugin development settings
+build --strip=never  # Keep debug info for plugin development
+test --test_output=errors

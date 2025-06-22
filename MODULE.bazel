@@ -1,0 +1,21 @@
+module(name = "simple_amplifier", version = "0.1.0")
+
+# Latest rules_rust with full Cargo.lock v4 support
+bazel_dep(name = "rules_rust", version = "0.61.0")
+
+# Rust toolchain
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = "2021",
+    versions = ["1.85.0"]  # Latest stable
+)
+use_repo(rust, "rust_toolchains")
+
+# Crate universe - official external dependencies solution
+crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = ["//:Cargo.toml", "//xtask:Cargo.toml"],
+)
+use_repo(crate, "crates")

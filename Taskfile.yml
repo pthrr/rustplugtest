@@ -1,0 +1,123 @@
+version: '3'
+
+vars:
+  BAZEL_BIN: bazelisk
+
+env:
+  CARGO_BAZEL_REPIN: 1
+
+tasks:
+  repin:
+    cmds:
+      - '{{.BAZEL_BIN}} mod deps'
+    sources:
+      - Cargo.toml
+      - xtask/Cargo.toml
+    generates:
+      - MODULE.bazel.lock
+
+  build:
+    cmds:
+      - '{{.BAZEL_BIN}} build //:simple_amplifier'
+    deps: [repin]
+
+  build-all:
+    cmds:
+      - '{{.BAZEL_BIN}} build //...'
+    deps: [repin]
+
+  build-release:
+    cmds:
+      - '{{.BAZEL_BIN}} build //:simple_amplifier --compilation_mode=opt'
+    deps: [repin]
+
+  test:
+    cmds:
+      - '{{.BAZEL_BIN}} test //...'
+    deps: [repin]
+
+  bundle:
+    cmds:
+      - '{{.BAZEL_BIN}} run //xtask:xtask -- bundle simple_amplifier --release'
+
+  bundle-debug:
+    cmds:
+      - '{{.BAZEL_BIN}} run //xtask:xtask -- bundle simple_amplifier --profile=profiling'
+
+  build-windows:
+    cmds:
+      - '{{.BAZEL_BIN}} build //:simple_amplifier --platforms=@rules_rust//rust/platform:x86_64-pc-windows-msvc'
+    deps: [repin]
+
+  build-macos:
+    cmds:
+      - '{{.BAZEL_BIN}} build //:simple_amplifier --platforms=@rules_rust//rust/platform:x86_64-apple-darwin'
+    deps: [repin]
+
+  build-linux:
+    cmds:
+      - '{{.BAZEL_BIN}} build //:simple_amplifier --platforms=@rules_rust//rust/platform:x86_64-unknown-linux-gnu'
+    deps: [repin]
+
+  check:
+    cmds:
+      - '{{.BAZEL_BIN}} build //:simple_amplifier --aspects=@rules_rust//rust:defs.bzl%rust_clippy_aspect --output_groups=clippy_checks'
+
+  fmt:
+    cmds:
+      - find . -name "*.rs" -exec rustfmt {} \;
+
+  clean:
+    cmds:
+      - '{{.BAZEL_BIN}} clean'
+
+  clean-all:
+    cmds:
+      - '{{.BAZEL_BIN}} clean --expunge'
+      - rm -f Cargo.lock MODULE.bazel.lock
+
+  install:
+    cmds:
+      - task: bundle
+      - |
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+          mkdir -p ~/.vst3 ~/.clap
+          cp -r target/bundled/simple_amplifier.vst3 ~/.vst3/
+          cp target/bundled/simple_amplifier.clap ~/.clap/
+          echo "Installed release version to ~/.vst3/ and ~/.clap/"
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+          mkdir -p ~/Library/Audio/Plug-Ins/VST3 ~/Library/Audio/Plug-Ins/CLAP
+          cp -r target/bundled/simple_amplifier.vst3 ~/Library/Audio/Plug-Ins/VST3/
+          cp target/bundled/simple_amplifier.clap ~/Library/Audio/Plug-Ins/CLAP/
+          echo "Installed release version to ~/Library/Audio/Plug-Ins/"
+        else
+          echo "❌ Unsupported OS for auto-install"
+        fi
+
+  install-debug:
+    cmds:
+      - task: bundle-debug
+      - |
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+          mkdir -p ~/.vst3 ~/.clap
+          cp -r target/bundled/simple_amplifier.vst3 ~/.vst3/simple_amplifier-debug.vst3
+          cp target/bundled/simple_amplifier.clap ~/.clap/simple_amplifier-debug.clap
+          echo "Installed debug version to ~/.vst3/ and ~/.clap/"
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+          mkdir -p ~/Library/Audio/Plug-Ins/VST3 ~/Library/Audio/Plug-Ins/CLAP
+          cp -r target/bundled/simple_amplifier.vst3 ~/Library/Audio/Plug-Ins/VST3/simple_amplifier-debug.vst3
+          cp target/bundled/simple_amplifier.clap ~/Library/Audio/Plug-Ins/CLAP/simple_amplifier-debug.clap
+          echo "Installed debug version to ~/Library/Audio/Plug-Ins/"
+        else
+          echo "❌ Unsupported OS for auto-install"
+        fi
+
+  install-both:
+    cmds:
+      - task: install
+      - task: install-debug
+      - echo "✅ Both versions installed"
+
+  default:
+    cmds:
+      - task --list

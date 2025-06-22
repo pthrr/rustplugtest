@@ -1,0 +1,6 @@
+[aliases]
+quick-build = ["run", "--", "bazel", "build", "//:simple_amplifier", "--compilation_mode=dbg"]
+bundle = ["run", "--", "bazel", "run", "//xtask:xtask", "--", "bundle", "simple_amplifier", "--release"]
+bundle-debug = ["run", "--", "bazel", "run", "//xtask:xtask", "--", "bundle", "simple_amplifier", "--profile=profiling"]
+test-plugin = ["run", "--", "bazel", "test", "//..."]
+repin = ["run", "--", "sh", "-c", "CARGO_BAZEL_REPIN=1 bazel mod deps"]
