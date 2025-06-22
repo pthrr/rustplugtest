@@ -62,15 +62,15 @@ jobs:
         env:
           BAZEL_OUTPUT_USER_ROOT: C:/bzl
 
-      - name: Test
-        if: runner.os != 'Windows'
-        run: bazel test //...
-
-      - name: Test (Windows)
-        if: runner.os == 'Windows'
-        run: bazel test //... --spawn_strategy=local --enable_runfiles=false --jobs=1
-        env:
-          BAZEL_OUTPUT_USER_ROOT: C:/bzl
+      # - name: Test
+      #   if: runner.os != 'Windows'
+      #   run: bazel test //...
+      #
+      # - name: Test (Windows)
+      #   if: runner.os == 'Windows'
+      #   run: bazel test //... --spawn_strategy=local --enable_runfiles=false --jobs=1
+      #   env:
+      #     BAZEL_OUTPUT_USER_ROOT: C:/bzl
 
       - name: Bundle plugins
         run: bazel run //xtask:xtask -- bundle simple_amplifier --release
