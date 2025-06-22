@@ -36,9 +36,17 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-bazel-
     - name: Build
-      run: bazel build //:simple_amplifier --compilation_mode=opt ${{ runner.os == 'Windows' && '--spawn_strategy=local --enable_runfiles=false' || '' }}
+      if: runner.os != 'Windows'
+      run: bazel build //:simple_amplifier --compilation_mode=opt
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      run: bazel build //:simple_amplifier --compilation_mode=opt --spawn_strategy=local --enable_runfiles=false
     - name: Test
-      run: bazel test //... ${{ runner.os == 'Windows' && '--spawn_strategy=local --enable_runfiles=false' || '' }}
+      if: runner.os != 'Windows'
+      run: bazel test //...
+    - name: Test (Windows)
+      if: runner.os == 'Windows'
+      run: bazel test //... --spawn_strategy=local --enable_runfiles=false
     - name: Bundle plugins
       run: bazel run //xtask:xtask -- bundle simple_amplifier --release
     - name: Upload artifacts
