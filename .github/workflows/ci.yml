@@ -40,13 +40,13 @@ jobs:
       run: bazel build //:simple_amplifier --compilation_mode=opt
     - name: Build (Windows)
       if: runner.os == 'Windows'
-      run: bazel build //:simple_amplifier --compilation_mode=opt --spawn_strategy=local --enable_runfiles=false
+      run: bazel build //:simple_amplifier --compilation_mode=fastbuild --output_user_root=C:/tmp/bazel --spawn_strategy=local --enable_runfiles=false
     - name: Test
       if: runner.os != 'Windows'
       run: bazel test //...
     - name: Test (Windows)
       if: runner.os == 'Windows'
-      run: bazel test //... --spawn_strategy=local --enable_runfiles=false
+      run: bazel test //... --output_user_root=C:/tmp/bazel --spawn_strategy=local --enable_runfiles=false
     - name: Bundle plugins
       run: bazel run //xtask:xtask -- bundle simple_amplifier --release
     - name: Upload artifacts
