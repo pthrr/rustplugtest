@@ -10,40 +10,37 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-
     steps:
     - uses: actions/checkout@v4
-
     - name: Install Bazel
       uses: bazel-contrib/setup-bazel@0.8.5
       with:
         bazelisk-cache: true
         disk-cache: ${{ github.workflow }}
         repository-cache: true
-
+    - name: Enable long paths (Windows)
+      if: runner.os == 'Windows'
+      run: git config --system core.longpaths true
     - name: Install system dependencies (Linux)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y libasound2-dev
-
     - name: Cache Bazel
       uses: actions/cache@v3
       with:
         path: |
           ~/.cache/bazel
           ~/.cache/bazelisk
-        key: ${{ runner.os }}-bazel-${{ hashFiles('**/WORKSPACE', '**/MODULE.bazel', '**/*.bzl') }}
-
+        key: ${{ runner.os }}-bazel-${{ hashFiles('**/Cargo.toml', '**/MODULE.bazel', '**/*.bzl') }}
+        restore-keys: |
+          ${{ runner.os }}-bazel-
     - name: Build
-      run: bazel build //... --compilation_mode=opt
-
+      run: bazel build //:simple_amplifier --compilation_mode=opt ${{ runner.os == 'Windows' && '--spawn_strategy=local --enable_runfiles=false' || '' }}
     - name: Test
-      run: bazel test //...
-
+      run: bazel test //... ${{ runner.os == 'Windows' && '--spawn_strategy=local --enable_runfiles=false' || '' }}
     - name: Bundle plugins
       run: bazel run //xtask:xtask -- bundle simple_amplifier --release
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
