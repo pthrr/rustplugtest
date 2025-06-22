@@ -44,7 +44,7 @@ jobs:
       run: cargo xtask bundle simple_amplifier --release
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: plugin-${{ matrix.os }}
         path: target/bundled/
