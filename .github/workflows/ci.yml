@@ -10,19 +10,23 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
     - uses: actions/checkout@v4
+
     - name: Install Bazel
       uses: bazel-contrib/setup-bazel@0.8.5
       with:
         bazelisk-cache: true
         disk-cache: ${{ github.workflow }}
         repository-cache: true
+
     - name: Install system dependencies (Linux)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y libasound2-dev
+
     - name: Cache Bazel
       uses: actions/cache@v3
       with:
@@ -30,16 +34,18 @@ jobs:
           ~/.cache/bazel
           ~/.cache/bazelisk
         key: ${{ runner.os }}-bazel-${{ hashFiles('**/WORKSPACE', '**/MODULE.bazel', '**/*.bzl') }}
-        restore-keys: |
-          ${{ runner.os }}-bazel-
+
     - name: Build
-      run: bazel build //... --config=release
+      run: bazel build //... --compilation_mode=opt
+
     - name: Test
       run: bazel test //...
+
     - name: Bundle plugins
-      run: bazel build //simple_amplifier:bundle --config=release
+      run: bazel run //xtask:xtask -- bundle simple_amplifier --release
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: plugin-${{ matrix.os }}
-        path: bazel-bin/simple_amplifier/
+        path: target/bundled/
