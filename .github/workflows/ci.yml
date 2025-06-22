@@ -33,7 +33,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libasound2-dev
 
-      - name: Cache Bazel
+      # Cache is only safe on Linux/macOS due to file locking issues on Windows
+      - name: Cache Bazel (not Windows)
+        if: runner.os != 'Windows'
         uses: actions/cache@v3
         with:
           path: |
@@ -43,11 +45,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bazel-
 
+      # Windows: Always clean first, set a short output root, force serial build
       - name: Bazel clean (Windows)
         if: runner.os == 'Windows'
         run: bazel clean --expunge
         env:
-          BAZEL_OUTPUT_USER_ROOT: C:/tmp/bazel
+          BAZEL_OUTPUT_USER_ROOT: C:/bzl
 
       - name: Build
         if: runner.os != 'Windows'
@@ -55,9 +58,9 @@ jobs:
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        run: bazel build //:simple_amplifier --compilation_mode=fastbuild --spawn_strategy=local --enable_runfiles=false
+        run: bazel build //:simple_amplifier --compilation_mode=fastbuild --spawn_strategy=local --enable_runfiles=false --jobs=1
         env:
-          BAZEL_OUTPUT_USER_ROOT: C:/tmp/bazel
+          BAZEL_OUTPUT_USER_ROOT: C:/bzl
 
       - name: Test
         if: runner.os != 'Windows'
@@ -65,9 +68,9 @@ jobs:
 
       - name: Test (Windows)
         if: runner.os == 'Windows'
-        run: bazel test //... --spawn_strategy=local --enable_runfiles=false
+        run: bazel test //... --spawn_strategy=local --enable_runfiles=false --jobs=1
         env:
-          BAZEL_OUTPUT_USER_ROOT: C:/tmp/bazel
+          BAZEL_OUTPUT_USER_ROOT: C:/bzl
 
       - name: Bundle plugins
         run: bazel run //xtask:xtask -- bundle simple_amplifier --release
